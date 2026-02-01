@@ -2,8 +2,8 @@
 
 A tiny, single-page web app built with **vanilla HTML + CSS + JavaScript** that recreates the classic Valentine prank:
 
-- **SS-2:** The ask — “will you be my valentine?” with a big **Yes** button and a **No** button that *runs away*  
-- **SS-1:** The win — after clicking **Yes**, the UI updates and **hearts burst** for a cute celebration
+- **SS-1:** The ask — “will you be my valentine?” with a big **Yes** button and a **No** button that *runs away*  
+- **SS-2:** The win — after clicking **Yes**, the UI updates and **hearts burst** for a cute celebration
 
 ---
 
@@ -111,6 +111,6 @@ Made for fun. Use responsibly. 💖
   <br/>
 
   🔐 **Protected PDF (password required):**  
-  [Download Valentines2026](docs/assets/Valentines2026.pdf)
+  [Download Valentines2026](docs/assets/Valentines2026.pdf?raw=1)
 
 </details>
