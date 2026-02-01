@@ -63,21 +63,20 @@ This project is designed to be hosted as a simple link.
 **Recommended location:** `docs/assets/SS-1.png` and `docs/assets/SS-2.png`
 
 <details>
-  <summary><strong>SS-1 (After clicking “Yes” — success screen)</strong></summary>
-
-  <br/>
-
-  ![SS-1](assets/SS-1.png)
-
-</details>
-
-<details>
   <summary><strong>SS-2 (Initial screen — “No” runs away)</strong></summary>
 
   <br/>
 
   ![SS-2](assets/SS-2.png)
 
+</details>
+
+<details>
+  <summary><strong>SS-1 (After clicking “Yes” — success screen)</strong></summary>
+
+  <br/>
+
+  ![SS-1](assets/SS-1.png)
 </details>
 
 ---
