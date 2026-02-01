@@ -42,6 +42,7 @@
       justify-content:center;
       padding:28px 22px 30px;
       gap:16px;
+      overflow:hidden; /* keeps No inside card */
     }
 
     .iconWrap{
@@ -125,6 +126,7 @@
       gap:26px;
       margin-top:10px;
       position:relative;
+      height:90px; /* gives room for No to run around */
     }
 
     button{
@@ -147,15 +149,19 @@
     #yesBtn:hover{ background:var(--yesHover); transform:translateY(-1px) scale(1.02); }
     #yesBtn:active{ transform:translateY(1px) scale(.98); }
 
+    /* IMPORTANT: No stretching. We ONLY position with left/top (not right). */
     #noBtn{
       background:var(--no);
       color:#333;
-      padding:12px 18px;
-      font-size:14px;
+      padding:8px 14px;          /* tiny pill like the screenshot */
+      font-size:13px;
       box-shadow:0 10px 18px rgba(0,0,0,.08);
-      position:absolute; /* we’ll move it inside the actions area */
-      right:70px;
-      top:8px;
+      position:absolute;
+      left:0;
+      top:0;
+      width:fit-content;
+      white-space:nowrap;
+      touch-action:none;
     }
 
     .note{
@@ -204,12 +210,6 @@
       60%{ transform:scale(1.02); }
       100%{ transform:scale(1); }
     }
-
-    /* Mobile: keep “No” still visible but still evasive */
-    @media (max-width: 520px){
-      #yesBtn{ padding:16px 38px; font-size:18px; }
-      #noBtn{ right:22px; top:10px; }
-    }
   </style>
 </head>
 <body>
@@ -223,7 +223,7 @@
       </div>
     </div>
 
-    <h1 id="title">nirali will you be my valentine?</h1>
+    <h1 id="title">nitya will you be my valentine?</h1>
 
     <div class="actions" id="actions">
       <button id="yesBtn" type="button">Yes</button>
@@ -235,7 +235,7 @@
 
   <script>
     // ---- CONFIG: change her name here ----
-    const GIRLFRIEND_NAME = "nirali"; // <-- edit this
+    const GIRLFRIEND_NAME = "Nitya"; // ✅ fixed
     // -------------------------------------
 
     const title = document.getElementById("title");
@@ -247,67 +247,58 @@
 
     title.textContent = `${GIRLFRIEND_NAME} will you be my valentine?`;
 
-    // Utility: clamp
     const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 
-    // Place "No" initially
+    // Place No initially near the right side like the screenshot
     function placeNoInitial(){
       const a = actions.getBoundingClientRect();
-      // Keep it on the right like the screenshot
-      const x = a.width - 110;
-      const y = 6;
-      noBtn.style.left = `${x}px`;
-      noBtn.style.top  = `${y}px`;
+      const b = noBtn.getBoundingClientRect();
+      const pad = 10;
+
+      const x = a.width - b.width - 90; // right-ish
+      const y = 10;
+
+      noBtn.style.left = `${clamp(x, pad, a.width - b.width - pad)}px`;
+      noBtn.style.top  = `${clamp(y, pad, a.height - b.height - pad)}px`;
     }
-    placeNoInitial();
+    window.addEventListener("load", placeNoInitial);
     window.addEventListener("resize", placeNoInitial);
 
-    // Move the "No" button somewhere else inside the actions area
+    // Move the No button somewhere else INSIDE the actions area
     function moveNoAway(fromX, fromY){
       const a = actions.getBoundingClientRect();
       const b = noBtn.getBoundingClientRect();
-
-      // Boundaries (padding so it stays inside)
       const pad = 10;
+
       const minX = pad;
       const maxX = a.width - b.width - pad;
       const minY = pad;
       const maxY = a.height - b.height - pad;
 
-      // Pick a random spot, but try to push it away from the cursor
-      let x, y;
-      for (let i = 0; i < 10; i++){
-        x = Math.random() * (maxX - minX) + minX;
-        y = Math.random() * (maxY - minY) + minY;
+      // cursor relative to actions
+      const cx = fromX - a.left;
+      const cy = fromY - a.top;
 
-        // cursor relative to actions
-        const cx = fromX - a.left;
-        const cy = fromY - a.top;
+      let best = { x: Math.random()*(maxX-minX)+minX, y: Math.random()*(maxY-minY)+minY, d: -1 };
 
+      // Try multiple candidates and pick the farthest from cursor
+      for (let i = 0; i < 18; i++){
+        const x = Math.random() * (maxX - minX) + minX;
+        const y = Math.random() * (maxY - minY) + minY;
         const dx = (x + b.width/2) - cx;
         const dy = (y + b.height/2) - cy;
-        const dist = Math.hypot(dx, dy);
-
-        if (dist > 140) break; // far enough
+        const d = Math.hypot(dx, dy);
+        if (d > best.d) best = { x, y, d };
       }
 
-      noBtn.style.left = `${clamp(x, minX, maxX)}px`;
-      noBtn.style.top  = `${clamp(y, minY, maxY)}px`;
+      noBtn.style.left = `${clamp(best.x, minX, maxX)}px`;
+      noBtn.style.top  = `${clamp(best.y, minY, maxY)}px`;
     }
 
-    // Make it *very* hard to click:
-    // 1) Moves on hover
-    // 2) Moves when cursor gets near it
-    // 3) Moves on mousedown/touchstart
-    noBtn.addEventListener("mouseenter", (e) => moveNoAway(e.clientX, e.clientY));
-    noBtn.addEventListener("mousedown", (e) => {
-      e.preventDefault();
-      moveNoAway(e.clientX, e.clientY);
-    });
-    noBtn.addEventListener("touchstart", (e) => {
-      const t = e.touches[0];
-      moveNoAway(t.clientX, t.clientY);
-    }, {passive:true});
+    // Make it basically impossible:
+    // - if cursor gets within 160px, it runs
+    // - if you try to hover or click, it runs immediately
+    const RUN_DISTANCE = 160;
 
     actions.addEventListener("mousemove", (e) => {
       const nb = noBtn.getBoundingClientRect();
@@ -315,8 +306,14 @@
         (nb.left + nb.width/2) - e.clientX,
         (nb.top  + nb.height/2) - e.clientY
       );
-      // If cursor gets close, run away
-      if (dist < 120) moveNoAway(e.clientX, e.clientY);
+      if (dist < RUN_DISTANCE) moveNoAway(e.clientX, e.clientY);
+    });
+
+    // extra: if cursor enters the button area at all, teleport away
+    noBtn.addEventListener("pointerenter", (e) => moveNoAway(e.clientX, e.clientY));
+    noBtn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      moveNoAway(e.clientX, e.clientY);
     });
 
     // Hearts burst on "Yes"
@@ -326,11 +323,9 @@
         const h = document.createElement("div");
         h.className = "heart";
 
-        // Start at click point
         h.style.left = `${originX - 7}px`;
         h.style.top  = `${originY - 7}px`;
 
-        // Random flight
         const dx = (Math.random() * 220 - 110).toFixed(0) + "px";
         const dy = (-1 * (Math.random() * 240 + 120)).toFixed(0) + "px";
         const s  = (Math.random() * 0.8 + 0.7).toFixed(2);
@@ -348,34 +343,24 @@
     }
 
     let accepted = false;
-    yesBtn.addEventListener("click", (e) => {
+    yesBtn.addEventListener("click", () => {
       if (accepted) return;
       accepted = true;
 
-      // Hearts from button center
       const r = yesBtn.getBoundingClientRect();
       const x = r.left + r.width / 2;
       const y = r.top + r.height / 2;
       burstHearts(x, y);
 
-      // Update UI
       card.classList.add("success");
       title.textContent = "YAYYYYY 💖 See you on Valentine’s 😌";
       note.textContent = "Best decision ever. (I knew you’d say yes 😈)";
       yesBtn.textContent = "💘";
-      yesBtn.style.filter = "brightness(1.03)";
-      noBtn.style.opacity = "0.35";
 
-      // Optional: disable the runaway after acceptance
+      // Make No harmless after yes
       noBtn.disabled = true;
+      noBtn.style.opacity = "0.25";
       noBtn.style.cursor = "not-allowed";
-    });
-
-    // Bonus: in case browser tries to focus the No button via keyboard
-    noBtn.addEventListener("focus", () => {
-      const a = actions.getBoundingClientRect();
-      moveNoAway(a.left + a.width/2, a.top + a.height/2);
-      yesBtn.focus();
     });
   </script>
 </body>
